@@ -5,7 +5,7 @@ template <typename T>
 class Vector {
     
 public:
-    Vector() 
+    Vector() noexcept
     : m_size(0) 
     , m_capacity(0) 
     , m_data(nullptr) {}
@@ -69,15 +69,15 @@ public:
     }
     
 public:
-    int size() const {
+    int size() const noexcept {
         return m_size;
     }
     
-    int capacity() const {
+    int capacity() const noexcept {
         return m_capacity;
     }
     
-    bool empty() const {
+    bool empty() const noexcept {
         return m_size == 0;
     }
     
@@ -95,7 +95,92 @@ public:
         m_capacity = newCap;
     }
     
-    void push_back(T val) {
+    void shrink_to_fit() {
+        if (m_capacity == m_size) return;
+        if (m_size == 0) {
+            delete[] m_data;
+            m_data = nullptr;
+            m_capacity = 0;
+            return;
+        }
+        T* newData = new T[m_size];
+        for (int i = 0; i < m_size; i++) {
+            newData[i] = m_data[i];
+        }
+        delete[] m_data;
+        m_data = newData;
+        m_capacity = m_size;
+    }
+    
+    T& operator[](int index) {
+        if (index < 0 || index >= m_size) {
+            throw std::out_of_range("index is out of range");
+        }
+        return m_data[index];
+    }
+    
+    const T& operator[](int index) const {
+        if (index < 0 || index >= m_size) {
+            throw std::out_of_range("index is out of range");
+        }
+        return m_data[index];
+    }
+    
+    T& at(int index) {
+        if (index < 0 || index >= m_size) {
+            throw std::out_of_range("error: index is out of range");
+        }
+        return m_data[index];
+    }
+    
+    const T& at(int index) const {
+        if (index < 0 || index >= m_size) {
+            throw std::out_of_range("error: index is out of range");
+        }
+        return m_data[index];
+    }
+    
+    T& front() {
+        if (m_size == 0) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return m_data[0];
+    }
+    
+    const T& front() const {
+        if (m_size == 0) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return m_data[0];
+    }
+    
+    T& back() {
+        if (m_size == 0) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return m_data[m_size - 1];
+    }
+    
+    const T& back() const {
+        if (m_size == 0) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return m_data[m_size - 1];
+    }
+    
+    T* data() noexcept {
+        return m_data;
+    }
+    
+    const T* data() const noexcept {
+        return m_data;
+    }
+    
+    void clear() noexcept {
+        m_size = 0;
+    }
+    
+    void push_back(const T& val) {
         if (m_size == m_capacity) {
             int newCap;
             if (m_capacity == 0) {
@@ -115,6 +200,26 @@ public:
         m_size++;
     }
     
+    void push_back(T&& val) {
+        if (m_size == m_capacity) {
+            int newCap;
+            if (m_capacity == 0) {
+                newCap = 1;
+            } else {
+                newCap = m_capacity * 2;
+            }
+            T* newData = new T[newCap];
+            for (int i = 0; i < m_size; i++) {
+                newData[i] = std::move(m_data[i]);
+            }
+            delete[] m_data;
+            m_data = newData;
+            m_capacity = newCap;
+        }
+        m_data[m_size] = std::move(val);
+        m_size++;
+    }
+    
     void pop_back() {
         if (m_size == 0) {
             throw std::out_of_range("error: vector is empty");
@@ -122,11 +227,46 @@ public:
         m_size--;
     }
     
-    T& at(int index) {
-        if (index < 0 || index >= m_size) {
-            throw std::out_of_range("error: index is out of range");
+    void resize(int newSize) {
+        if (newSize == m_size) return;
+        if (newSize < 0) {
+            throw std::invalid_argument("negative size");
         }
-        return m_data[index];
+        if (newSize < m_size) {
+            m_size = newSize;
+        } else if (newSize > m_size) {
+            if (newSize > m_capacity) {
+                reserve(newSize);
+            }
+            for (int i = m_size; i < newSize; i++) {
+                m_data[i] = T();
+            }
+            m_size = newSize;
+        }
+    }
+    
+    void resize(int newSize, const T& val) {
+        if (newSize == m_size) return;
+        if (newSize < 0) {
+            throw std::invalid_argument("negative size");
+        }
+        if (newSize < m_size) {
+            m_size = newSize;
+        } else if (newSize > m_size) {
+            if (newSize > m_capacity) {
+                reserve(newSize);
+            }
+            for (int i = m_size; i < newSize; i++) {
+                m_data[i] = val;
+            }
+            m_size = newSize;
+        }
+    }
+    
+    void swap(Vector& other) noexcept {
+        std::swap(m_size, other.m_size);
+        std::swap(m_capacity, other.m_capacity);
+        std::swap(m_data, other.m_data);
     }
     
 private:
