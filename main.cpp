@@ -1,5 +1,6 @@
-#include <iostream>
-#include <exception>
+#include <cstddef>
+#include <utility>
+#include <stdexcept>
 
 template <typename T>
 class Vector {
@@ -84,15 +85,9 @@ public:
     void reserve(int newCap) {
         if (newCap <= m_capacity) return;
         if (newCap < 0) {
-            throw std::invalid_argument("error: negative capacity");
+            throw std::invalid_argument("negative capacity");
         }
-        T* newData = new T[newCap];
-        for (int i = 0; i < m_size; i++) {
-            newData[i] = m_data[i];
-        }
-        delete[] m_data;
-        m_data = newData;
-        m_capacity = newCap;
+        reallocate(newCap);
     }
     
     void shrink_to_fit() {
@@ -181,41 +176,13 @@ public:
     }
     
     void push_back(const T& val) {
-        if (m_size == m_capacity) {
-            int newCap;
-            if (m_capacity == 0) {
-                newCap = 1;
-            } else {
-                newCap = m_capacity * 2;
-            }
-            T* newData = new T[newCap];
-            for (int i = 0; i < m_size; i++) {
-                newData[i] = m_data[i];
-            }
-            delete[] m_data;
-            m_data = newData;
-            m_capacity = newCap;
-        }
+        grow_if_needed();
         m_data[m_size] = val;
         m_size++;
     }
     
     void push_back(T&& val) {
-        if (m_size == m_capacity) {
-            int newCap;
-            if (m_capacity == 0) {
-                newCap = 1;
-            } else {
-                newCap = m_capacity * 2;
-            }
-            T* newData = new T[newCap];
-            for (int i = 0; i < m_size; i++) {
-                newData[i] = std::move(m_data[i]);
-            }
-            delete[] m_data;
-            m_data = newData;
-            m_capacity = newCap;
-        }
+        grow_if_needed();
         m_data[m_size] = std::move(val);
         m_size++;
     }
@@ -273,9 +240,26 @@ private:
     int m_size;
     int m_capacity;
     T* m_data;
-};
 
-int main() {
-    
-    return 0;
-}
+    void grow_if_needed() {
+        if (m_size == m_capacity) {
+            int newCap;
+            if (m_capacity == 0) {
+                newCap = 1;
+            } else {
+                newCap = m_capacity * 2;
+            }
+            reserve(newCap);
+        }
+    }
+
+    void reallocate(int newCap) {
+        T* newData = new T[newCap];
+        for (int i = 0; i < m_size; i++) {
+            newData[i] = std::move(m_data[i]);
+        }
+        delete[] m_data;
+        m_data = newData;
+        m_capacity = newCap;
+    }
+};
