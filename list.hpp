@@ -1,14 +1,15 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
-#include <iostream>
+#include <cstddef>
+#include <utility>
 
 namespace softacademy {
 
     template <typename T>
     class LinkedList {
     private:
-        strust Node {
+        struct Node {
             T value;
             Node* m_prev;
             Node* m_next;
@@ -22,7 +23,7 @@ namespace softacademy {
             , m_prev(p)
             , m_next(n) {}
         };
-    };
+    
 
     public:
         using size_type = std::size_t;
@@ -220,7 +221,8 @@ namespace softacademy {
             other.m_tail = nullptr;
             other.m_size = 0;
         }
-
+    };
+    
 } // namespace softacademy
 
 #endif // LIST_HPP
